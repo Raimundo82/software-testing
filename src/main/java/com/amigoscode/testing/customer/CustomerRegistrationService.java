@@ -1,23 +1,25 @@
 package com.amigoscode.testing.customer;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.amigoscode.testing.utils.PhoneNumberValidator;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@AllArgsConstructor
 public class CustomerRegistrationService {
 
     private final CustomerRepository customerRepository;
-
-    @Autowired
-    public CustomerRegistrationService(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
-    }
+    private final PhoneNumberValidator phoneNumberValidator;
 
     public void registerNewCustomer(CustomerRegistrationRequest request) {
         String phoneNumber = request.getCustomer().getPhoneNumber();
+
+        if (!phoneNumberValidator.test(phoneNumber)) {
+            throw new IllegalStateException(String.format("phone number %s is invalid", phoneNumber));
+        }
 
         Optional<Customer> customerOptional = customerRepository
                 .selectCustomerByPhoneNumber(phoneNumber);
@@ -30,7 +32,7 @@ public class CustomerRegistrationService {
             throw new IllegalStateException(String.format("phone number [%s] is taken", phoneNumber));
         }
 
-        if(request.getCustomer().getId() == null) {
+        if (request.getCustomer().getId() == null) {
             request.getCustomer().setId(UUID.randomUUID());
         }
 
